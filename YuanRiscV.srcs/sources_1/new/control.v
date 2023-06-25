@@ -24,8 +24,8 @@
 module control(
     input   wire    [6:0]                           op_code,
     output  reg     [`PC_NEXT_SRC_SEL_WIDTH-1 : 0]  pc_next_src_sel,
-    output  reg     [`BRANCH_SEL_WIDTH-1 : 0]       branch_sel,
     output  reg     [`REG_DATA_SRC_SEL_WIDTH-1 : 0] reg_data_src_sel,
+    output  reg                                     reg_data_from_mem,
     output  reg     [`ALUT_SRC2_WIDTH-1 : 0]        alu_src2_sel,
     output  reg     [`ALU_OP_WIDTH-1 : 0]           alu_op,
     output  reg                                     reg_write,
@@ -38,6 +38,7 @@ always @(*) begin
     alu_src2_sel = 0;
     alu_op = 0;
     reg_write = 0;
+    reg_data_from_mem = 0;
     mem_write = 0;
     case (op_code)
         `OP_LUI: begin 
@@ -50,8 +51,13 @@ always @(*) begin
         end      
         `OP_JAL: begin
             reg_write = 1'b1;
-            reg_data_src_sel = `REG_DATA_SRC_AUIPC;
+            reg_data_src_sel = `REG_DATA_SRC_JAL_JALR;
             pc_next_src_sel = `PC_NEXT_SRC_JAL;
+        end
+        `OP_JALR: begin
+            reg_write = 1'b1;
+            reg_data_src_sel = `REG_DATA_SRC_JAL_JALR;
+            pc_next_src_sel = `PC_NEXT_SRC_JALR;
         end     
         `OP_BRANCH: begin
             pc_next_src_sel = `PC_NEXT_SRC_BRANCH;
@@ -59,6 +65,7 @@ always @(*) begin
         end  
         `OP_LOAD: begin
             reg_write = 1'b1;
+            reg_data_from_mem = 1'b1;
             alu_src2_sel = `ALU_SRC2_IMM;
         end    
         `OP_STORE: begin
